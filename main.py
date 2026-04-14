@@ -242,14 +242,14 @@ def _fetch_location_from_ip() -> tuple[float, float, str] | None:
 
 
 def resolve_lat_lon_city() -> tuple[float, float, str]:
-    cached = _read_geo_cache()
-    if cached:
-        return cached
     loc = _fetch_location_from_ip()
     if loc:
         lat, lon, city = loc
         _write_geo_cache(lat, lon, city)
         return lat, lon, city
+    cached = _read_geo_cache()
+    if cached:
+        return cached
     return 51.5074, -0.1278, "London (fallback)"
 
 

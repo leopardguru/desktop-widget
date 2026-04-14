@@ -8,15 +8,17 @@ A small **always-on-top** Windows desktop panel built with **PyQt6**. It shows t
 
 ## Features
 
-| Area | Description |
-|------|-------------|
-| **Clock** | Live time (HH:MM:SS) and full calendar date. |
+
+| Area              | Description                                                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Clock**         | Live time (HH:MM:SS) and full calendar date.                                                                                                                                                                         |
 | **Local weather** | Today’s conditions plus a **3-day** outlook. Location is estimated from your **public IP** (city-level, approximate). Uses [Open-Meteo](https://open-meteo.com/) (no API key). Refreshes about every **15 minutes**. |
-| **Asia weather** | Second forecast for a **fixed city** chosen from: Hong Kong, Tokyo, Bangkok, Shanghai, Taiwan (coordinates use the **Taipei** area for Taiwan). Same forecast layout and refresh interval as local weather. |
-| **Notes** | Plain-text scratch pad; **auto-saved** as you type. |
-| **System** | Overall **CPU %** and **RAM %** (used/total GiB). |
-| **Processes** | Table of top processes by **CPU** or **RAM** (sort via dropdown). **End process…** sends `terminate`, waits, then `kill` if needed—only after you confirm in a dialog. The widget’s own PID cannot be ended. |
-| **Window** | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕ row). |
+| **Asia weather**  | Second forecast for a **fixed city** chosen from: Hong Kong, Tokyo, Bangkok, Shanghai, Taiwan (coordinates use the **Taipei** area for Taiwan). Same forecast layout and refresh interval as local weather.          |
+| **Notes**         | Plain-text scratch pad; **auto-saved** as you type.                                                                                                                                                                  |
+| **System**        | Overall **CPU %** and **RAM %** (used/total GiB).                                                                                                                                                                    |
+| **Processes**     | Table of top processes by **CPU** or **RAM** (sort via dropdown). **End process…** sends `terminate`, waits, then `kill` if needed—only after you confirm in a dialog. The widget’s own PID cannot be ended.         |
+| **Window**        | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕ row).                                                                                                                 |
+
 
 ### Feature toggles
 
@@ -32,7 +34,7 @@ Click **⚙** to open **Features**. Each major block can be enabled or disabled;
 
 ### Python dependencies
 
-See [`requirements.txt`](requirements.txt):
+See `[requirements.txt](requirements.txt)`:
 
 - `PyQt6` — UI.
 - `psutil` — CPU/RAM and process metrics.
@@ -43,21 +45,17 @@ See [`requirements.txt`](requirements.txt):
 ## Installation
 
 1. **Clone the repository**
-
-   ```powershell
+  ```powershell
    git clone https://github.com/leopardguru/desktop-widget.git
    cd desktop-widget
-   ```
-
+  ```
    Active development branch in this repo: `cursor/desktop-widget` (check with `git branch -a`).
-
 2. **Create a virtual environment** (recommended)
-
-   ```powershell
+  ```powershell
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1
    pip install -r requirements.txt
-   ```
+  ```
 
 ---
 
@@ -92,12 +90,14 @@ All app data lives under:
 
 `%LOCALAPPDATA%\desktop-widget\`
 
-| File | Purpose |
-|------|---------|
-| `settings.json` | Boolean feature flags (which sections are visible). |
-| `notes.json` | Saved notes text. |
+
+| File                    | Purpose                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `settings.json`         | Boolean feature flags (which sections are visible).                                                                 |
+| `notes.json`            | Saved notes text.                                                                                                   |
 | `weather_location.json` | Cached **latitude / longitude / city label** for local weather (refreshed when the cache expires—see code for TTL). |
-| `world_weather.json` | Last selected **Asia weather** city name. |
+| `world_weather.json`    | Last selected **Asia weather** city name.                                                                           |
+
 
 Deleting these files resets the corresponding settings (the directory is recreated as needed).
 
@@ -109,10 +109,8 @@ Deleting these files resets the corresponding settings (the directory is recreat
   - Coarse location from **ipapi.co** (HTTPS), then **ip-api.com** (HTTP) if needed, then a **London** fallback for coordinates only if both fail.  
   - Forecast data: **Open-Meteo** `v1/forecast` endpoint.  
   - VPNs and corporate networks can change the apparent location.
-
 - **Asia weather**  
   - Fixed coordinates per city in code; not GPS.
-
 - **Privacy**  
   - IP-based geolocation and Open-Meteo requests mean **your public IP** is visible to those services while fetching weather.
 
@@ -142,12 +140,14 @@ desktop-widget/
 
 ## Troubleshooting
 
-| Issue | Things to try |
-|-------|----------------|
-| Weather never loads | Install/update deps: `pip install -r requirements.txt`. Check internet and TLS/proxy. |
-| Empty process table | Usually resolves after a few seconds; if not, check antivirus blocking `psutil`. |
-| Cannot end a process | Expected for system processes; try “Run as administrator” only if you accept the risk. |
+
+| Issue                   | Things to try                                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Weather never loads     | Install/update deps: `pip install -r requirements.txt`. Check internet and TLS/proxy.                                      |
+| Empty process table     | Usually resolves after a few seconds; if not, check antivirus blocking `psutil`.                                           |
+| Cannot end a process    | Expected for system processes; try “Run as administrator” only if you accept the risk.                                     |
 | Window stuck off-screen | Reset position by toggling features or editing window state is not implemented—restart app or use Alt+Space if applicable. |
+
 
 ---
 
@@ -164,3 +164,4 @@ Suggestions and pull requests can go through [GitHub Issues / PRs](https://githu
 - [Open-Meteo](https://open-meteo.com/) — weather API (free, no key required for non-commercial use per their terms).
 - [psutil](https://github.com/giampaolo/psutil) — cross-platform system and process utilities.
 - [Qt / PyQt6](https://www.riverbankcomputing.com/software/pyqt/) — GUI framework.
+
