@@ -19,7 +19,7 @@ from urllib.request import Request, urlopen
 
 import psutil
 from PyQt6.QtCore import QPoint, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QMouseEvent
+from PyQt6.QtGui import QColor, QFont, QMouseEvent, QPalette
 from PyQt6.QtWidgets import (
     QApplication,
     QAbstractItemView,
@@ -64,6 +64,22 @@ class DragHeader(QWidget):
         self._drag_pos = None
         super().mouseReleaseEvent(event)
 
+
+def _apply_dark_combo_style(combo: QComboBox) -> None:
+    """Windows QComboBox often ignores stylesheet text color; set palette explicitly."""
+    fg = QColor("#c0caf5")
+    p = combo.palette()
+    for group in (
+        QPalette.ColorGroup.Active,
+        QPalette.ColorGroup.Inactive,
+        QPalette.ColorGroup.Disabled,
+    ):
+        p.setColor(group, QPalette.ColorRole.Text, fg)
+        p.setColor(group, QPalette.ColorRole.ButtonText, fg)
+        p.setColor(group, QPalette.ColorRole.WindowText, fg)
+    combo.setPalette(p)
+
+
 DATA_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "desktop-widget"
 NOTES_FILE = DATA_DIR / "notes.json"
 SETTINGS_FILE = DATA_DIR / "settings.json"
@@ -80,15 +96,25 @@ DEFAULT_SETTINGS: dict[str, bool] = {
 GEO_CACHE_FILE = DATA_DIR / "weather_location.json"
 WORLD_WEATHER_FILE = DATA_DIR / "world_weather.json"
 
-# Fixed cities (lat, lon) for the “Asia weather” picker (Taiwan → Taipei area).
+# Fixed cities (lat, lon) for the city weather picker (Taiwan → Taipei area).
 WORLD_WEATHER_COORDS: dict[str, tuple[float, float]] = {
     "Hong Kong": (22.3193, 114.1694),
     "Tokyo": (35.6762, 139.6503),
     "Bangkok": (13.7563, 100.5018),
     "Shanghai": (31.2304, 121.4737),
     "Taiwan": (25.0330, 121.5654),
+    "Seoul": (37.5665, 126.9780),
+    "Busan": (35.1796, 129.0756),
 }
-WORLD_CITY_ORDER: tuple[str, ...] = ("Hong Kong", "Tokyo", "Bangkok", "Shanghai", "Taiwan")
+WORLD_CITY_ORDER: tuple[str, ...] = (
+    "Hong Kong",
+    "Tokyo",
+    "Bangkok",
+    "Shanghai",
+    "Taiwan",
+    "Seoul",
+    "Busan",
+)
 
 _HTTP_HEADERS = {"User-Agent": "DeskWidget/1.0 (local weather; +https://open-meteo.com)"}
 
@@ -555,7 +581,7 @@ class DesktopWidget(QMainWindow):
         sw_l.addWidget(self.weather_fc_lbl)
         root.addWidget(self.section_weather)
 
-        ww_title = QLabel("Asia weather")
+        ww_title = QLabel("City weather")
         ww_title.setObjectName("section")
         ww_title.setToolTip(
             "Forecast for a fixed city (coordinates). Same 15-minute refresh as local weather. "
@@ -572,6 +598,7 @@ class DesktopWidget(QMainWindow):
         self.world_city_combo.setCurrentText(load_world_city_choice())
         self.world_city_combo.blockSignals(False)
         self.world_city_combo.currentTextChanged.connect(self._on_world_city_changed)
+        _apply_dark_combo_style(self.world_city_combo)
         world_pick.addWidget(wc_lbl)
         world_pick.addWidget(self.world_city_combo, stretch=1)
 
@@ -631,6 +658,7 @@ class DesktopWidget(QMainWindow):
         self.proc_sort.addItems(["Top by CPU", "Top by RAM"])
         self.proc_sort.setObjectName("procSort")
         self.proc_sort.currentIndexChanged.connect(lambda _i: self._schedule_proc_refresh())
+        _apply_dark_combo_style(self.proc_sort)
         proc_row.addWidget(self.proc_sort)
 
         self.proc_table = QTableWidget(0, 3)
@@ -748,7 +776,7 @@ class DesktopWidget(QMainWindow):
             }
             QComboBox#procSort {
                 background-color: #16161e;
-                color: #a9b1d6;
+                color: #c0caf5;
                 border: 1px solid #3b4261;
                 border-radius: 6px;
                 padding: 2px 8px;
@@ -756,9 +784,17 @@ class DesktopWidget(QMainWindow):
                 min-width: 7em;
             }
             QComboBox#procSort::drop-down { border: none; }
+            QComboBox#procSort QAbstractItemView {
+                background-color: #16161e;
+                color: #c0caf5;
+                border: 1px solid #3b4261;
+                selection-background-color: #3b4261;
+                selection-color: #c0caf5;
+                outline: 0;
+            }
             QComboBox#worldCityCombo {
                 background-color: #16161e;
-                color: #a9b1d6;
+                color: #c0caf5;
                 border: 1px solid #3b4261;
                 border-radius: 6px;
                 padding: 2px 8px;
@@ -766,6 +802,14 @@ class DesktopWidget(QMainWindow):
                 min-width: 9em;
             }
             QComboBox#worldCityCombo::drop-down { border: none; }
+            QComboBox#worldCityCombo QAbstractItemView {
+                background-color: #16161e;
+                color: #c0caf5;
+                border: 1px solid #3b4261;
+                selection-background-color: #3b4261;
+                selection-color: #c0caf5;
+                outline: 0;
+            }
             QTableWidget#procTable {
                 background-color: #16161e;
                 color: #c0caf5;
@@ -897,7 +941,7 @@ class DesktopWidget(QMainWindow):
         feature_defs: list[tuple[str, str]] = [
             ("feature_clock", "Clock & date"),
             ("feature_weather", "Weather (today + 3-day forecast)"),
-            ("feature_world_weather", "Asia weather (city picker)"),
+            ("feature_world_weather", "City weather (city picker)"),
             ("feature_notes", "Notes"),
             ("feature_system", "System summary (CPU & RAM)"),
             ("feature_processes", "Process list & end process"),

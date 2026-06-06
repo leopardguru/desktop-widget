@@ -1,6 +1,6 @@
 # Desktop widget
 
-A small **always-on-top** Windows desktop panel built with **PyQt6**. It shows the time, local and regional weather, quick notes, system resource usage, and a lightweight process list—with optional **end process** (with confirmation). Sections can be turned on or off and settings persist between sessions.
+A small **always-on-top** Windows desktop panel built with **PyQt6**. It shows the time, local and city weather, quick notes, system resource usage, and a lightweight process list—with optional **end process** (with confirmation). Sections can be turned on or off and settings persist between sessions.
 
 **Repository:** [github.com/leopardguru/desktop-widget](https://github.com/leopardguru/desktop-widget)
 
@@ -8,66 +8,89 @@ A small **always-on-top** Windows desktop panel built with **PyQt6**. It shows t
 
 ## Features
 
+| Area | Description |
+|------|-------------|
+| **Clock** | Live time (HH:MM:SS) and full calendar date. |
+| **Local weather** | Today’s conditions plus a **3-day** outlook. Location from your **public IP** (city-level, approximate). [Open-Meteo](https://open-meteo.com/) (no API key). Refreshes about every **15 minutes**. |
+| **City weather** | Second forecast for a **fixed city** you pick from the dropdown. Same layout and refresh interval as local weather. |
+| **Notes** | Plain-text scratch pad; **auto-saved** as you type. |
+| **System** | Overall **CPU %** and **RAM %** (used/total GiB). |
+| **Processes** | Top processes by **CPU** or **RAM** (sort via dropdown). **End process…** uses `terminate` → wait → `kill`, only after confirmation. This widget’s PID cannot be ended. |
+| **Window** | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕). |
 
-| Area              | Description                                                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Clock**         | Live time (HH:MM:SS) and full calendar date.                                                                                                                                                                         |
-| **Local weather** | Today’s conditions plus a **3-day** outlook. Location is estimated from your **public IP** (city-level, approximate). Uses [Open-Meteo](https://open-meteo.com/) (no API key). Refreshes about every **15 minutes**. |
-| **Asia weather**  | Second forecast for a **fixed city** chosen from: Hong Kong, Tokyo, Bangkok, Shanghai, Taiwan (coordinates use the **Taipei** area for Taiwan). Same forecast layout and refresh interval as local weather.          |
-| **Notes**         | Plain-text scratch pad; **auto-saved** as you type.                                                                                                                                                                  |
-| **System**        | Overall **CPU %** and **RAM %** (used/total GiB).                                                                                                                                                                    |
-| **Processes**     | Table of top processes by **CPU** or **RAM** (sort via dropdown). **End process…** sends `terminate`, waits, then `kill` if needed—only after you confirm in a dialog. The widget’s own PID cannot be ended.         |
-| **Window**        | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕ row).                                                                                                                 |
+### City weather choices
 
+Hong Kong · Tokyo · Bangkok · Shanghai · Taiwan (Taipei area) · **Seoul** · **Busan**
 
-### Feature toggles
+Your last selection is saved in `world_weather.json`.
 
-Click **⚙** to open **Features**. Each major block can be enabled or disabled; choices are saved automatically.
+### Feature toggles (⚙)
+
+Each block can be enabled or disabled; choices are saved to `settings.json`:
+
+| Setting key | Section |
+|-------------|---------|
+| `feature_clock` | Clock & date |
+| `feature_weather` | Local weather |
+| `feature_world_weather` | City weather (dropdown) |
+| `feature_notes` | Notes |
+| `feature_system` | System summary |
+| `feature_processes` | Process list & end process |
+
+---
+
+## Recent improvements
+
+- **Local weather location** — Looks up your IP **on every refresh** (about every 15 minutes). Uses cached coordinates only when live lookup fails; cache expires after **7 days**.
+- **City weather** — Added **Seoul** and **Busan**; section renamed from “Asia weather” to **City weather**.
+- **Weather API** — Fixed Open-Meteo requests (removed invalid `time` from the `daily` parameter, which caused HTTP 400).
+- **HTTPS on Windows** — Uses `requests` first for weather/geolocation, with urllib fallbacks.
+- **Process & weather UI** — Background fetches use worker threads; results are delivered to the UI via Qt signals (avoids empty or frozen panels).
+- **Dropdown readability** — City and process sort combos use an explicit light palette on Windows so selected text is visible on the dark theme.
 
 ---
 
 ## Requirements
 
 - **Windows** (developed and tested on Windows 10/11).
-- **Python 3.10+** recommended (uses modern typing syntax).
-- Network access for weather and (for local weather) IP-based geolocation.
+- **Python 3.10+** recommended.
+- Network access for weather and IP geolocation.
 
 ### Python dependencies
 
-See `[requirements.txt](requirements.txt)`:
+See [requirements.txt](requirements.txt):
 
 - `PyQt6` — UI.
 - `psutil` — CPU/RAM and process metrics.
-- `requests` — HTTPS for weather and geolocation (more reliable TLS on Windows than stdlib alone; urllib is used as fallback).
+- `requests` — HTTPS for weather and geolocation (urllib used as fallback).
 
 ---
 
 ## Installation
 
 1. **Clone the repository**
-  ```powershell
+
+   ```powershell
    git clone https://github.com/leopardguru/desktop-widget.git
    cd desktop-widget
-  ```
-   Active development branch in this repo: `cursor/desktop-widget` (check with `git branch -a`).
-2. **Create a virtual environment** (recommended)
-  ```powershell
+   git checkout cursor/desktop-widget
+   ```
+
+2. **Create a virtual environment**
+
+   ```powershell
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1
    pip install -r requirements.txt
-  ```
+   ```
 
 ---
 
 ## Running
 
-From the project folder:
-
 ```powershell
 .\run.bat
 ```
-
-`run.bat` expects `.venv` and dependencies to exist; if not, it prints the `venv` / `pip install` hint.
 
 **Manual run:**
 
@@ -77,51 +100,51 @@ From the project folder:
 
 ### Start with Windows (optional)
 
-Create a shortcut to `run.bat` in the Startup folder:
-
 1. Press **Win+R**, enter `shell:startup`, Enter.
-2. Paste a shortcut to `run.bat` (or `pythonw` + `main.py` if you prefer no console).
+2. Add a shortcut to `run.bat`.
 
 ---
 
 ## Data and config (on disk)
 
-All app data lives under:
+All app data lives under `%LOCALAPPDATA%\desktop-widget\`:
 
-`%LOCALAPPDATA%\desktop-widget\`
+| File | Purpose |
+|------|---------|
+| `settings.json` | Feature on/off flags. |
+| `notes.json` | Saved notes text. |
+| `weather_location.json` | Fallback cache of lat/lon/city for local weather (used when IP lookup fails; **7-day** TTL). |
+| `world_weather.json` | Last selected city for **City weather**. |
 
-
-| File                    | Purpose                                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `settings.json`         | Boolean feature flags (which sections are visible).                                                                 |
-| `notes.json`            | Saved notes text.                                                                                                   |
-| `weather_location.json` | Cached **latitude / longitude / city label** for local weather (refreshed when the cache expires—see code for TTL). |
-| `world_weather.json`    | Last selected **Asia weather** city name.                                                                           |
-
-
-Deleting these files resets the corresponding settings (the directory is recreated as needed).
+Delete a file to reset that setting (the folder is recreated as needed).
 
 ---
 
 ## Weather details
 
-- **Local weather**  
-  - Coarse location from **ipapi.co** (HTTPS), then **ip-api.com** (HTTP) if needed, then a **London** fallback for coordinates only if both fail.  
-  - Forecast data: **Open-Meteo** `v1/forecast` endpoint.  
-  - VPNs and corporate networks can change the apparent location.
-- **Asia weather**  
-  - Fixed coordinates per city in code; not GPS.
-- **Privacy**  
-  - IP-based geolocation and Open-Meteo requests mean **your public IP** is visible to those services while fetching weather.
+### Local weather
 
-If you see **“Weather unavailable (check network)”**, check firewall/VPN, ensure `requests` is installed, and that `https://api.open-meteo.com` is reachable.
+1. Try **ipapi.co** (HTTPS), then **ip-api.com** (HTTP).
+2. On success, update cache and fetch forecast from **Open-Meteo** `v1/forecast`.
+3. If IP lookup fails, use **cached** coordinates (if any, and not expired).
+4. If still no location, use **London** coordinates as a last-resort grid only.
+
+VPNs and corporate networks can change the apparent location.
+
+### City weather
+
+Fixed coordinates per city in code (not GPS). Changing the dropdown refetches immediately and saves your choice.
+
+### Privacy
+
+IP geolocation and Open-Meteo requests expose your **public IP** to those services while fetching weather.
 
 ---
 
 ## Process list and “End process”
 
-- Refresh runs on a timer; work is done in a **background thread**; UI updates are marshalled safely to the Qt main thread.
-- Ending a process may require **Administrator** rights for protected processes; if access is denied, use Task Manager or run the widget elevated (not generally recommended unless you understand the risk).
+- Process sampling runs in a **background thread**; the table updates on the Qt main thread.
+- Protected processes may return **Access denied**; use Task Manager or run elevated only if you accept the risk.
 
 ---
 
@@ -129,9 +152,9 @@ If you see **“Weather unavailable (check network)”**, check firewall/VPN, en
 
 ```
 desktop-widget/
-├── main.py           # Application entry point and UI
+├── main.py
 ├── requirements.txt
-├── run.bat           # Windows launcher (uses .venv)
+├── run.bat
 ├── README.md
 └── .gitignore
 ```
@@ -140,28 +163,26 @@ desktop-widget/
 
 ## Troubleshooting
 
-
-| Issue                   | Things to try                                                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Weather never loads     | Install/update deps: `pip install -r requirements.txt`. Check internet and TLS/proxy.                                      |
-| Empty process table     | Usually resolves after a few seconds; if not, check antivirus blocking `psutil`.                                           |
-| Cannot end a process    | Expected for system processes; try “Run as administrator” only if you accept the risk.                                     |
-| Window stuck off-screen | Reset position by toggling features or editing window state is not implemented—restart app or use Alt+Space if applicable. |
-
+| Issue | Things to try |
+|-------|----------------|
+| **Weather unavailable** | Run `pip install -r requirements.txt`. Check firewall/VPN and that `https://api.open-meteo.com` is reachable. |
+| **Wrong local city** | VPN/proxy affects IP geolocation. Wait for the next refresh (~15 min) or delete `weather_location.json` and restart. |
+| **Empty process table** | Wait a few seconds; check antivirus blocking `psutil`. |
+| **Dark / unreadable dropdown text** | Fixed in recent builds (palette + stylesheet). Restart after updating. |
+| **Cannot end a process** | Expected for system processes; administrator rights may be required. |
 
 ---
 
 ## Contributing / license
 
-There is no license file in this repository yet. If you open-source the project, add a `LICENSE` and clarify terms for contributors.
+No `LICENSE` file yet. Add one before wider distribution.
 
-Suggestions and pull requests can go through [GitHub Issues / PRs](https://github.com/leopardguru/desktop-widget) on the main repository.
+Issues and PRs: [github.com/leopardguru/desktop-widget](https://github.com/leopardguru/desktop-widget)
 
 ---
 
 ## Acknowledgements
 
-- [Open-Meteo](https://open-meteo.com/) — weather API (free, no key required for non-commercial use per their terms).
-- [psutil](https://github.com/giampaolo/psutil) — cross-platform system and process utilities.
+- [Open-Meteo](https://open-meteo.com/) — weather API.
+- [psutil](https://github.com/giampaolo/psutil) — system/process utilities.
 - [Qt / PyQt6](https://www.riverbankcomputing.com/software/pyqt/) — GUI framework.
-
