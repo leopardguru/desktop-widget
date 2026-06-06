@@ -65,6 +65,18 @@ class DragHeader(QWidget):
         super().mouseReleaseEvent(event)
 
 
+def _font_pt(family: str, pt: int, *, weight: QFont.Weight = QFont.Weight.Normal) -> QFont:
+    """Font sized in points (stylesheet-safe; never uses pixel-only mode)."""
+    font = QFont(family, pt)
+    font.setWeight(weight)
+    return font
+
+
+def _default_ui_font() -> QFont:
+    """App-wide default font (~10 pt)."""
+    return _font_pt("Segoe UI", 10)
+
+
 def _apply_dark_combo_style(combo: QComboBox) -> None:
     """Windows QComboBox often ignores stylesheet text color; set palette explicitly."""
     fg = QColor("#c0caf5")
@@ -78,6 +90,7 @@ def _apply_dark_combo_style(combo: QComboBox) -> None:
         p.setColor(group, QPalette.ColorRole.ButtonText, fg)
         p.setColor(group, QPalette.ColorRole.WindowText, fg)
     combo.setPalette(p)
+    combo.setFont(_default_ui_font())
 
 
 DATA_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "desktop-widget"
@@ -96,25 +109,49 @@ DEFAULT_SETTINGS: dict[str, bool] = {
 GEO_CACHE_FILE = DATA_DIR / "weather_location.json"
 WORLD_WEATHER_FILE = DATA_DIR / "world_weather.json"
 
-# Fixed cities (lat, lon) for the city weather picker (Taiwan → Taipei area).
+# Fixed cities (lat, lon) for the city weather picker.
 WORLD_WEATHER_COORDS: dict[str, tuple[float, float]] = {
     "Hong Kong": (22.3193, 114.1694),
     "Tokyo": (35.6762, 139.6503),
     "Bangkok": (13.7563, 100.5018),
     "Shanghai": (31.2304, 121.4737),
-    "Taiwan": (25.0330, 121.5654),
+    "Taipei": (25.0330, 121.5654),
     "Seoul": (37.5665, 126.9780),
-    "Busan": (35.1796, 129.0756),
+    "Busan 釜山": (35.1796, 129.0756),
+    "Sapporo 札幌 (Hokkaido 北海道)": (43.0621, 141.3544),
 }
 WORLD_CITY_ORDER: tuple[str, ...] = (
     "Hong Kong",
     "Tokyo",
     "Bangkok",
     "Shanghai",
-    "Taiwan",
+    "Taipei",
     "Seoul",
-    "Busan",
+    "Busan 釜山",
+    "Sapporo 札幌 (Hokkaido 北海道)",
 )
+
+_CLOCK_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+_CLOCK_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
+def _format_clock_date(now: datetime) -> str:
+    """Locale-independent date line (Windows strftime can fail for some locales)."""
+    return f"{_CLOCK_WEEKDAYS[now.weekday()]}, {now.day:02d} {_CLOCK_MONTHS[now.month - 1]} {now.year}"
+
 
 _HTTP_HEADERS = {"User-Agent": "DeskWidget/1.0 (local weather; +https://open-meteo.com)"}
 
@@ -286,6 +323,12 @@ def load_world_city_choice() -> str:
     try:
         raw = json.loads(WORLD_WEATHER_FILE.read_text(encoding="utf-8"))
         c = raw.get("city") if isinstance(raw, dict) else None
+        if c == "Busan":
+            c = "Busan 釜山"
+        if c == "Hokkaido 北海道":
+            c = "Sapporo 札幌 (Hokkaido 北海道)"
+        if c == "Taiwan":
+            c = "Taipei"
         if isinstance(c, str) and c in WORLD_WEATHER_COORDS:
             return c
     except (OSError, json.JSONDecodeError, TypeError):
@@ -537,10 +580,6 @@ class DesktopWidget(QMainWindow):
 
         self.time_lbl = QLabel()
         self.time_lbl.setObjectName("time")
-        tfont = QFont()
-        tfont.setPointSize(28)
-        tfont.setBold(True)
-        self.time_lbl.setFont(tfont)
         self.time_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.date_lbl = QLabel()
@@ -585,7 +624,7 @@ class DesktopWidget(QMainWindow):
         ww_title.setObjectName("section")
         ww_title.setToolTip(
             "Forecast for a fixed city (coordinates). Same 15-minute refresh as local weather. "
-            "“Taiwan” uses Taipei-area coordinates."
+            "Taipei uses city-center coordinates."
         )
         world_pick = QHBoxLayout()
         wc_lbl = QLabel("City")
@@ -728,40 +767,40 @@ class DesktopWidget(QMainWindow):
                 border: 1px solid #3b4261;
             }
             QWidget#header { background: transparent; }
-            QLabel#title { color: #c0caf5; font-weight: 600; font-size: 13px; }
+            QLabel#title { color: #c0caf5; font-weight: 600; font-size: 10pt; }
             QLabel#closeBtn {
                 color: #565f89;
-                font-size: 14px;
+                font-size: 11pt;
                 padding: 2px 6px;
                 border-radius: 4px;
             }
             QLabel#closeBtn:hover { color: #f7768e; background: #292e42; }
             QLabel#gearBtn {
                 color: #565f89;
-                font-size: 14px;
+                font-size: 11pt;
                 padding: 2px 6px;
                 border-radius: 4px;
             }
             QLabel#gearBtn:hover { color: #7dcfff; background: #292e42; }
             QLabel#time { color: #7aa2f7; }
-            QLabel#date { color: #a9b1d6; font-size: 12px; }
-            QLabel#section { color: #bb9af7; font-size: 11px; font-weight: 600; }
-            QLabel#weatherCity { color: #7dcfff; font-size: 11px; }
-            QLabel#weatherNow { color: #c0caf5; font-size: 12px; }
-            QLabel#weatherFc { color: #a9b1d6; font-size: 11px; }
-            QLabel#worldNow { color: #c0caf5; font-size: 12px; }
-            QLabel#worldFc { color: #a9b1d6; font-size: 11px; }
-            QLabel#sys { color: #9ece6a; font-size: 12px; }
-            QLabel#muted { color: #565f89; font-size: 11px; }
+            QLabel#date { color: #a9b1d6; }
+            QLabel#section { color: #bb9af7; font-size: 8pt; font-weight: 600; }
+            QLabel#weatherCity { color: #7dcfff; font-size: 8pt; }
+            QLabel#weatherNow { color: #c0caf5; font-size: 9pt; }
+            QLabel#weatherFc { color: #a9b1d6; font-size: 8pt; }
+            QLabel#worldNow { color: #c0caf5; font-size: 9pt; }
+            QLabel#worldFc { color: #a9b1d6; font-size: 8pt; }
+            QLabel#sys { color: #9ece6a; font-size: 9pt; }
+            QLabel#muted { color: #565f89; font-size: 8pt; }
             QPlainTextEdit#notes {
                 background-color: #16161e;
                 color: #c0caf5;
                 border: 1px solid #3b4261;
                 border-radius: 8px;
                 padding: 8px;
-                font-size: 12px;
+                font-size: 9pt;
             }
-            QCheckBox { color: #a9b1d6; font-size: 11px; }
+            QCheckBox { color: #a9b1d6; font-size: 8pt; }
             QCheckBox::indicator { width: 14px; height: 14px; }
             QSlider::groove:horizontal {
                 height: 4px;
@@ -780,7 +819,7 @@ class DesktopWidget(QMainWindow):
                 border: 1px solid #3b4261;
                 border-radius: 6px;
                 padding: 2px 8px;
-                font-size: 11px;
+                font-size: 8pt;
                 min-width: 7em;
             }
             QComboBox#procSort::drop-down { border: none; }
@@ -798,7 +837,7 @@ class DesktopWidget(QMainWindow):
                 border: 1px solid #3b4261;
                 border-radius: 6px;
                 padding: 2px 8px;
-                font-size: 11px;
+                font-size: 8pt;
                 min-width: 9em;
             }
             QComboBox#worldCityCombo::drop-down { border: none; }
@@ -816,7 +855,7 @@ class DesktopWidget(QMainWindow):
                 gridline-color: #3b4261;
                 border: 1px solid #3b4261;
                 border-radius: 8px;
-                font-size: 11px;
+                font-size: 8pt;
             }
             QTableWidget#procTable::item:selected {
                 background-color: #3b4261;
@@ -827,7 +866,7 @@ class DesktopWidget(QMainWindow):
                 color: #a9b1d6;
                 border: none;
                 border-bottom: 1px solid #3b4261;
-                font-size: 10px;
+                font-size: 8pt;
                 padding: 4px;
             }
             QPushButton#killBtn {
@@ -836,12 +875,15 @@ class DesktopWidget(QMainWindow):
                 border: 1px solid #3b4261;
                 border-radius: 6px;
                 padding: 4px 10px;
-                font-size: 11px;
+                font-size: 8pt;
             }
             QPushButton#killBtn:hover { background-color: #3b4261; }
             QPushButton#killBtn:disabled { color: #565f89; }
             """
         )
+
+        self.time_lbl.setFont(_font_pt("Segoe UI", 21, weight=QFont.Weight.Bold))
+        self.date_lbl.setFont(_font_pt("Segoe UI", 9))
 
         self._apply_topmost(True)
         self._set_opacity(self.opacity_slider.value())
@@ -961,12 +1003,12 @@ class DesktopWidget(QMainWindow):
         dlg.setStyleSheet(
             """
             QDialog { background-color: #1a1b26; color: #c0caf5; }
-            QLabel { color: #a9b1d6; font-size: 12px; }
-            QLabel#muted { color: #565f89; font-size: 11px; }
-            QCheckBox { color: #c0caf5; font-size: 12px; }
+            QLabel { color: #a9b1d6; font-size: 9pt; }
+            QLabel#muted { color: #565f89; font-size: 8pt; }
+            QCheckBox { color: #c0caf5; font-size: 9pt; }
             QCheckBox::indicator { width: 16px; height: 16px; }
             QPushButton { background-color: #292e42; color: #c0caf5; border: 1px solid #3b4261;
-                border-radius: 6px; padding: 6px 14px; font-size: 12px; }
+                border-radius: 6px; padding: 6px 14px; font-size: 9pt; }
             QPushButton:hover { background-color: #3b4261; }
             """
         )
@@ -988,7 +1030,7 @@ class DesktopWidget(QMainWindow):
     def _tick_clock(self) -> None:
         now = datetime.now()
         self.time_lbl.setText(now.strftime("%H:%M:%S"))
-        self.date_lbl.setText(now.strftime("%A, %d %B %Y"))
+        self.date_lbl.setText(_format_clock_date(now))
 
     def _tick_sys(self) -> None:
         cpu = psutil.cpu_percent(interval=None)
@@ -1185,6 +1227,7 @@ class DesktopWidget(QMainWindow):
 
 def main() -> int:
     app = QApplication(sys.argv)
+    app.setFont(_default_ui_font())
     app.setQuitOnLastWindowClosed(True)
     w = DesktopWidget()
     w.show()

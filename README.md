@@ -8,19 +8,21 @@ A small **always-on-top** Windows desktop panel built with **PyQt6**. It shows t
 
 ## Features
 
-| Area | Description |
-|------|-------------|
-| **Clock** | Live time (HH:MM:SS) and full calendar date. |
+
+| Area              | Description                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Clock**         | Live time (HH:MM:SS) and full calendar date.                                                                                                                                                       |
 | **Local weather** | Today’s conditions plus a **3-day** outlook. Location from your **public IP** (city-level, approximate). [Open-Meteo](https://open-meteo.com/) (no API key). Refreshes about every **15 minutes**. |
-| **City weather** | Second forecast for a **fixed city** you pick from the dropdown. Same layout and refresh interval as local weather. |
-| **Notes** | Plain-text scratch pad; **auto-saved** as you type. |
-| **System** | Overall **CPU %** and **RAM %** (used/total GiB). |
-| **Processes** | Top processes by **CPU** or **RAM** (sort via dropdown). **End process…** uses `terminate` → wait → `kill`, only after confirmation. This widget’s PID cannot be ended. |
-| **Window** | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕). |
+| **City weather**  | Second forecast for a **fixed city** you pick from the dropdown. Same layout and refresh interval as local weather.                                                                                |
+| **Notes**         | Plain-text scratch pad; **auto-saved** as you type.                                                                                                                                                |
+| **System**        | Overall **CPU %** and **RAM %** (used/total GiB).                                                                                                                                                  |
+| **Processes**     | Top processes by **CPU** or **RAM** (sort via dropdown). **End process…** uses `terminate` → wait → `kill`, only after confirmation. This widget’s PID cannot be ended.                            |
+| **Window**        | **Always on top** toggle, **opacity** slider, **drag** by the title bar (“Desk widget” / ⚙ / ✕).                                                                                                   |
+
 
 ### City weather choices
 
-Hong Kong · Tokyo · Bangkok · Shanghai · Taiwan (Taipei area) · **Seoul** · **Busan**
+Hong Kong · Tokyo · Bangkok · Shanghai · **Taipei** · Seoul · **Busan 釜山** · **Sapporo 札幌 (Hokkaido 北海道)**
 
 Your last selection is saved in `world_weather.json`.
 
@@ -28,14 +30,16 @@ Your last selection is saved in `world_weather.json`.
 
 Each block can be enabled or disabled; choices are saved to `settings.json`:
 
-| Setting key | Section |
-|-------------|---------|
-| `feature_clock` | Clock & date |
-| `feature_weather` | Local weather |
-| `feature_world_weather` | City weather (dropdown) |
-| `feature_notes` | Notes |
-| `feature_system` | System summary |
-| `feature_processes` | Process list & end process |
+
+| Setting key             | Section                    |
+| ----------------------- | -------------------------- |
+| `feature_clock`         | Clock & date               |
+| `feature_weather`       | Local weather              |
+| `feature_world_weather` | City weather (dropdown)    |
+| `feature_notes`         | Notes                      |
+| `feature_system`        | System summary             |
+| `feature_processes`     | Process list & end process |
+
 
 ---
 
@@ -69,20 +73,17 @@ See [requirements.txt](requirements.txt):
 ## Installation
 
 1. **Clone the repository**
-
-   ```powershell
+  ```powershell
    git clone https://github.com/leopardguru/desktop-widget.git
    cd desktop-widget
    git checkout cursor/desktop-widget
-   ```
-
+  ```
 2. **Create a virtual environment**
-
-   ```powershell
+  ```powershell
    python -m venv .venv
    .\.venv\Scripts\Activate.ps1
    pip install -r requirements.txt
-   ```
+  ```
 
 ---
 
@@ -109,12 +110,14 @@ See [requirements.txt](requirements.txt):
 
 All app data lives under `%LOCALAPPDATA%\desktop-widget\`:
 
-| File | Purpose |
-|------|---------|
-| `settings.json` | Feature on/off flags. |
-| `notes.json` | Saved notes text. |
+
+| File                    | Purpose                                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `settings.json`         | Feature on/off flags.                                                                        |
+| `notes.json`            | Saved notes text.                                                                            |
 | `weather_location.json` | Fallback cache of lat/lon/city for local weather (used when IP lookup fails; **7-day** TTL). |
-| `world_weather.json` | Last selected city for **City weather**. |
+| `world_weather.json`    | Last selected city for **City weather**.                                                     |
+
 
 Delete a file to reset that setting (the folder is recreated as needed).
 
@@ -163,13 +166,15 @@ desktop-widget/
 
 ## Troubleshooting
 
-| Issue | Things to try |
-|-------|----------------|
-| **Weather unavailable** | Run `pip install -r requirements.txt`. Check firewall/VPN and that `https://api.open-meteo.com` is reachable. |
-| **Wrong local city** | VPN/proxy affects IP geolocation. Wait for the next refresh (~15 min) or delete `weather_location.json` and restart. |
-| **Empty process table** | Wait a few seconds; check antivirus blocking `psutil`. |
-| **Dark / unreadable dropdown text** | Fixed in recent builds (palette + stylesheet). Restart after updating. |
-| **Cannot end a process** | Expected for system processes; administrator rights may be required. |
+
+| Issue                               | Things to try                                                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Weather unavailable**             | Run `pip install -r requirements.txt`. Check firewall/VPN and that `https://api.open-meteo.com` is reachable.        |
+| **Wrong local city**                | VPN/proxy affects IP geolocation. Wait for the next refresh (~15 min) or delete `weather_location.json` and restart. |
+| **Empty process table**             | Wait a few seconds; check antivirus blocking `psutil`.                                                               |
+| **Dark / unreadable dropdown text** | Fixed in recent builds (palette + stylesheet). Restart after updating.                                               |
+| **Cannot end a process**            | Expected for system processes; administrator rights may be required.                                                 |
+
 
 ---
 
@@ -186,3 +191,4 @@ Issues and PRs: [github.com/leopardguru/desktop-widget](https://github.com/leopa
 - [Open-Meteo](https://open-meteo.com/) — weather API.
 - [psutil](https://github.com/giampaolo/psutil) — system/process utilities.
 - [Qt / PyQt6](https://www.riverbankcomputing.com/software/pyqt/) — GUI framework.
+
